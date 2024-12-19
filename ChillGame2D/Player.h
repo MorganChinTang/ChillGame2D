@@ -1,47 +1,93 @@
 #pragma once
 #include "raylib.h"
+#include <vector>
 
 enum class PlayerState {
     IDLE_RIGHT,
     IDLE_LEFT,
     RUN_RIGHT,
-    RUN_LEFT
+    RUN_LEFT,
+    EVENT_1,
+    EVENT_1_FROZEN
+};
+
+enum class Direction {
+    LEFT,
+    RIGHT
 };
 
 class Player {
 public:
+    Player() :
+        position{ 0, 0 },
+        state(PlayerState::IDLE_RIGHT),
+        lastDirection(Direction::RIGHT),
+        currentFrame(0),
+        frameCounter(0),
+        idleRightTexture{ 0 },
+        idleLeftTexture{ 0 },
+        runRightTexture{ 0 },
+        runLeftTexture{ 0 },
+        eventTexture{ 0 },
+        deadChickenTexture{ 0 },
+        isEventAnimationComplete(false),
+        isEventActive(false),
+        canMove(true),
+        currentDeadChickenIndex(0)
+    {
+    }
+
+    ~Player() {
+        UnloadTexture(idleRightTexture);
+        UnloadTexture(idleLeftTexture);
+        UnloadTexture(runRightTexture);
+        UnloadTexture(runLeftTexture);
+        UnloadTexture(eventTexture);
+        UnloadTexture(deadChickenTexture);
+        for (auto& texture : deadChickenTextures) {
+            UnloadTexture(texture);
+        }
+    }
+
     void Main();
     void Start();
     void Update();
     void Draw();
-
-    void SetPosition(Vector2 pos) { position = pos; }
+    void SetState(PlayerState newState);
+    void HandleMovement();
+    void UpdateAnimation();
+    void LoadDeadChickenTextures();
+    void SetEventActive(bool active);
     Vector2 GetPosition() const { return position; }
-    float GetFrameWidth() const { return frameRec.width; }
-    float GetFrameHeight() const { return frameRec.height; }
+    float GetFrameWidth() const;
+    float GetFrameHeight() const;
+    float GetFrameWidth(Texture2D texture, int frameCount) const;
+    bool IsEventAnimationComplete() const { return isEventAnimationComplete; }
+    bool IsEventActive() const { return isEventActive; }
 
 private:
-    void LoadSprites();
-    void UpdateAnimation();
-    void SetState(PlayerState newState);
+    static constexpr float SCALE = 8.0f;
+    static constexpr int FRAME_SPEED = 8;
+    static constexpr int MOVEMENT_SPEED = 5;
+    static constexpr int EVENT_FRAME_COUNT = 6;
+    static constexpr int IDLE_FRAME_COUNT = 4;
+    static constexpr int RUN_FRAME_COUNT = 4;
+    static constexpr int DEAD_CHICKEN_COUNT = 4;  // Number of dead chicken variations
 
-    // Sprite and animation properties
-    Texture2D spriteIdleRight;
-    Texture2D spriteIdleLeft;
-    Texture2D spriteRunRight;
-    Texture2D spriteRunLeft;
-    Rectangle frameRec;    // Current frame rectangle
-    Vector2 position;      // Player position
-    Vector2 velocity;      // Player velocity
-
-    // Animation properties
-    PlayerState currentState;
-    int currentFrame;      // Current animation frame
-    int framesCounter;     // General frames counter
-    int framesSpeed;       // Animation frame speed
-    int numFrames;         // Number of frames in the sprite sheet
-    bool wasMovingRight;   // Track last movement direction
-
-    // Movement properties
-    static constexpr float MOVE_SPEED = 200.0f;  // Pixels per second
+    Vector2 position;
+    PlayerState state;
+    Direction lastDirection;
+    int currentFrame;
+    int frameCounter;
+    Texture2D idleRightTexture;
+    Texture2D idleLeftTexture;
+    Texture2D runRightTexture;
+    Texture2D runLeftTexture;
+    Texture2D eventTexture;
+    Texture2D deadChickenTexture;
+    std::vector<Texture2D> deadChickenTextures;
+    bool isEventAnimationComplete;
+    bool isEventActive;
+    bool canMove;
+    int currentDeadChickenIndex;
 };
