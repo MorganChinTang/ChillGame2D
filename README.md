@@ -42,7 +42,14 @@ There is no executable atm, raylib is used to make this game so make sure to hav
 ## Feedback & Inquiries
 
 - Discord: eepyuwu
+---
+## Credit
+Some assets are from the following itch.io creators. Thanks to them for publishing these assets for free!
+https://otterisk.itch.io/hana-caraka-animals-pack
 
+https://pixelplant.itch.io/chicken-sprite-sheet
+
+https://www.pixilart.com/art/ui-restart-button-4e55c102013b890
 ---
 
 Get ready for a relaxing, absurd, and oddly satisfying experience in **ChillGame2D**!
