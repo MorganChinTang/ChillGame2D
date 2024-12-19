@@ -8,14 +8,16 @@ class ChillGame {
 public:
     ChillGame() :
         player{},
-        currentEvent{ nullptr },
+        event1{ nullptr },
+        event2{ nullptr },
         restartSprite{ 0 },
         restartButtonRect{ 0 },
         backgroundTexture{ 0 },
         deathCount{ 0 },
         showRestartButton{ false },
         triggerTime{ 0.0 },
-        isEvent1Unlocked{ false }  // Track if event 1 has been completed
+        isEvent1Unlocked{ false },
+        isEvent2Unlocked{ false }
     {
     }
     void Main();
@@ -28,16 +30,19 @@ private:
     void InitializeEvents();
     void HandleRestartButton();
     void Reset();
+    Vector2 GetRandomEventPosition() const;
 
     Player player;
-    std::unique_ptr<Event> currentEvent;
+    std::unique_ptr<Event> event1;
+    std::unique_ptr<Event> event2;
     Texture2D restartSprite;
     Rectangle restartButtonRect;
     Texture2D backgroundTexture;
     int deathCount;
     bool showRestartButton;
     double triggerTime;
-    bool isEvent1Unlocked;  // Maintain unlocked state across restarts
+    bool isEvent1Unlocked;
+    bool isEvent2Unlocked;
 
     // Screen dimensions
     const int screenWidth = 1200;
@@ -45,4 +50,5 @@ private:
 
     static constexpr float RESTART_SCALE = 0.15f;
     static constexpr float RESTART_PADDING_RATIO = 0.02f;
+    static constexpr float EVENT_BORDER_PADDING_RATIO = 0.1f;
 };

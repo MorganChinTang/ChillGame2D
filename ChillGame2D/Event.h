@@ -3,7 +3,8 @@
 #include "Player.h"
 
 enum class EventType {
-    EVENT_1
+    EVENT_1,
+    EVENT_2
 };
 
 class Event {
@@ -36,6 +37,8 @@ public:
     bool IsTriggered() const { return isTriggered; }
     bool IsCollected() const { return isCollected; }
     void SetCollected(bool collected) { isCollected = collected; }
+    EventType GetType() const { return eventType; }
+    void SetStarPosition(Vector2 pos) { starPosition = pos; }
 
 private:
     void HandleEvent();

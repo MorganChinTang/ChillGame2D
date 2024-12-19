@@ -25,12 +25,38 @@ void ChillGame::Main() {
     }
 
     // Clean up resources
-    if (currentEvent) {
-        currentEvent.reset();  // Ensure event is destroyed before textures
-    }
+    if (event1) event1.reset();
+    if (event2) event2.reset();
     UnloadTexture(backgroundTexture);
     UnloadTexture(restartSprite);
     CloseWindow();
+}
+
+Vector2 ChillGame::GetRandomEventPosition() const {
+    const float borderPadding = screenWidth * EVENT_BORDER_PADDING_RATIO;
+    float randomX = borderPadding + (float)GetRandomValue(0, (int)(screenWidth - 2 * borderPadding));
+    float randomY = borderPadding + (float)GetRandomValue(0, (int)(screenHeight - 2 * borderPadding));
+    return { randomX, randomY };
+}
+
+void ChillGame::InitializeEvents() {
+    // Initialize Event 1
+    event1 = std::make_unique<Event>();
+    Vector2 event1Pos = GetRandomEventPosition();
+    event1->Main(EventType::EVENT_1, event1Pos);
+    event1->SetStarPosition({ 30.0f, (float)GetScreenHeight() - 150.0f });
+    if (isEvent1Unlocked) {
+        event1->SetCollected(true);
+    }
+
+    // Initialize Event 2
+    event2 = std::make_unique<Event>();
+    Vector2 event2Pos = GetRandomEventPosition();
+    event2->Main(EventType::EVENT_2, event2Pos);
+    event2->SetStarPosition({ 240.0f, (float)GetScreenHeight() - 150.0f });
+    if (isEvent2Unlocked) {
+        event2->SetCollected(true);
+    }
 }
 
 void ChillGame::Start() {
@@ -39,39 +65,38 @@ void ChillGame::Start() {
     player.Start();
 }
 
-void ChillGame::InitializeEvents() {
-    currentEvent = std::make_unique<Event>();
-    Vector2 eventPos = {
-        GetScreenWidth() * 0.75f - 32.0f,
-        GetScreenHeight() * 0.5f - 32.0f
-    };
-    currentEvent->Main(EventType::EVENT_1, eventPos);
-    if (isEvent1Unlocked) {
-        currentEvent->SetCollected(true);  // Keep star colored if event was previously completed
-    }
-}
-
 void ChillGame::Update() {
     player.Update();
 
-    if (currentEvent) {
-        if (currentEvent->CheckCollision(player)) {
-            showRestartButton = false;
-            triggerTime = GetTime();
-            isEvent1Unlocked = true;
-        }
+    bool eventTriggered = false;
 
-        // After 3 seconds of event trigger
-        if (!showRestartButton && currentEvent->IsTriggered()) {
-            float currentTime = static_cast<float>(GetTime());
-            float elapsedTime = currentTime - static_cast<float>(triggerTime);
+    // Check Event 1
+    if (event1 && event1->CheckCollision(player)) {
+        showRestartButton = false;
+        triggerTime = GetTime();
+        isEvent1Unlocked = true;
+        eventTriggered = true;
+    }
 
-            if (elapsedTime >= 3.0f) {
-                player.SetEventActive(true);  // Activate event state after delay
-                showRestartButton = true;
-                currentEvent->SetCollected(true);
-                deathCount++;
-            }
+    // Check Event 2
+    if (event2 && event2->CheckCollision(player)) {
+        showRestartButton = false;
+        triggerTime = GetTime();
+        isEvent2Unlocked = true;
+        eventTriggered = true;
+    }
+
+    // Handle event completion after delay
+    if (!showRestartButton && (event1->IsTriggered() || event2->IsTriggered())) {
+        float currentTime = static_cast<float>(GetTime());
+        float elapsedTime = currentTime - static_cast<float>(triggerTime);
+
+        if (elapsedTime >= 3.0f) {
+            player.SetEventActive(true);
+            showRestartButton = true;
+            if (event1->IsTriggered()) event1->SetCollected(true);
+            if (event2->IsTriggered()) event2->SetCollected(true);
+            deathCount++;
         }
     }
 
@@ -83,13 +108,11 @@ void ChillGame::Draw() {
     ClearBackground(RAYWHITE);
 
     if (backgroundTexture.id != 0) {
-        // Calculate scaling to maintain aspect ratio
         float scale = fmax(
             (float)screenWidth / backgroundTexture.width,
             (float)screenHeight / backgroundTexture.height
         );
 
-        // Calculate centered position and dimensions
         float destWidth = backgroundTexture.width * scale;
         float destHeight = backgroundTexture.height * scale;
         float destX = (screenWidth - destWidth) / 2;
@@ -105,9 +128,9 @@ void ChillGame::Draw() {
         );
     }
 
-    if (currentEvent) {
-        currentEvent->Draw();
-    }
+    // Draw events
+    if (event1) event1->Draw();
+    if (event2) event2->Draw();
 
     player.Draw();
 
@@ -140,8 +163,8 @@ void ChillGame::HandleRestartButton() {
 
 void ChillGame::Reset() {
     Start();
-    player.SetEventActive(false);  // Reset event state
-    InitializeEvents();  // This will maintain the unlocked state
+    player.SetEventActive(false);
+    InitializeEvents();
 }
 
 void ChillGame::LoadRestartButton() {

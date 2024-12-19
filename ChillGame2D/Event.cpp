@@ -10,8 +10,10 @@ void Event::Initialize(Vector2 pos) {
     isCollected = false;
     Start();
 
-    // Load event sprite
-    const char* spritePath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/susGrass_e1.png";
+    // Load event sprite based on type
+    const char* spritePath = (eventType == EventType::EVENT_1) ?
+        "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/susGrass_e1.png" :
+        "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/susBerry_e2.png";
     eventSprite = LoadTexture(spritePath);
 
     // Load star sprites
@@ -39,8 +41,8 @@ void Event::Initialize(Vector2 pos) {
 
     // Set star position at bottom left
     starPosition = {
-        10.0f,  // Padding from left
-        (float)GetScreenHeight() - starGraySprite.height * STAR_SCALE - 10.0f  // Padding from bottom
+        40.0f,  // Padding from left
+        (float)GetScreenHeight() - starGraySprite.height * STAR_SCALE - 40.0f  // Padding from bottom
     };
 }
 
@@ -69,7 +71,7 @@ bool Event::CheckCollision(Player& player) {
     bool collided = CheckCollisionRecs(eventRect, playerRect);
     if (collided) {
         HandleEvent();
-        player.SetState(PlayerState::EVENT_1);
+        player.SetState(eventType == EventType::EVENT_1 ? PlayerState::EVENT_1 : PlayerState::EVENT_1_FROZEN);
     }
     return collided;
 }
