@@ -24,7 +24,7 @@
 
 ## How to Play
 
-- **Move around:** Explore the map using your keyboard (WASD or arrow keys).
+- **Move around:** Explore the map using your keyboard (WASD).
 - **Interact:** Step into hazards or objects to discover new ways to die.
 - **Restart:** After each death, respawn automatically and continue exploring.
 
@@ -37,10 +37,11 @@ The primary goal of ChillGame2D is simple: discover all the possible ways to die
 ---
 ## How to open the file
 
-There is no executable atm, raylib is used to make this game so make sure to have that. :))
+- Download the files and open the visual studio 2022 .sln file.
+- If you wish to open the game with another compiller, make sure to install Raylib
 
-## Feedback & Inquiries
-
+## Feedback & Inquiries & footnote
+- It is my first time making a game all by myself (kind of) using Raylib, I enjoy the process while encountering a lot of obstacles. It doesn't seem much but I learned a lot during the making! 
 - Discord: eepyuwu
 ---
 ## Credit
