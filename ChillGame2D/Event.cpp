@@ -1,63 +1,50 @@
 #include "Event.h"
 
-void Event::Main(EventType type, Vector2 pos) {
-    eventType = type;
-    Initialize(pos);
-}
-
-void Event::Initialize(Vector2 pos) {
-    position = pos;
-    isCollected = false;
-    Start();
-
-    // Load event sprite
-    const char* spritePath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/susGrass_e1.png";
-    eventSprite = LoadTexture(spritePath);
-
-    // Load star sprites
-    const char* starGrayPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/starGray.png";
-    const char* starPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/star.png";
-    starGraySprite = LoadTexture(starGrayPath);
-    starSprite = LoadTexture(starPath);
-
-    if (eventSprite.id == 0 || starGraySprite.id == 0 || starSprite.id == 0) {
-        TraceLog(LOG_ERROR, "Failed to load Event sprites");
-        return;
-    }
-
-    // Calculate scaled dimensions
-    float scaledWidth = eventSprite.width * EVENT_SCALE;
-    float scaledHeight = eventSprite.height * EVENT_SCALE;
-
-    // Initialize event rectangle for collision
-    eventRect = {
-        position.x,
-        position.y,
-        scaledWidth,
-        scaledHeight
-    };
-
-    // Set star position at bottom left
-    starPosition = {
-        10.0f,  // Padding from left
-        (float)GetScreenHeight() - starGraySprite.height * STAR_SCALE - 10.0f  // Padding from bottom
-    };
-}
-
 void Event::Start() {
+    isCollected = false;
     isTriggered = false;
 }
 
 void Event::Update() {
-    // No update needed for now
+    if (isTriggered && !isCollected) {
+        HandleEvent();
+    }
 }
 
 void Event::HandleEvent() {
-    isTriggered = true;
+    isCollected = true;
 }
 
-bool Event::CheckCollision(Player& player) {
-    if (isTriggered) return false;
+void Event::Main(int type, Vector2 position) {
+    eventType = type;
+    eventPosition = position;
+    isCollected = false;
+    isTriggered = false;
+
+    const char* spritePath = nullptr;
+    if (type == 1) {
+        spritePath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/susGrass_e1.png";
+    }
+    else {
+        spritePath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/susBerry_e2.png";
+    }
+
+    eventSprite = LoadTexture(spritePath);
+    const char* starGrayPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/starGray.png";
+    const char* starPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/star.png";
+    starGraySprite = LoadTexture(starGrayPath);
+    starSprite = LoadTexture(starPath);
+}
+
+bool Event::CheckCollision(const Player& player) {
+    if (isCollected || isTriggered) return false;
+
+    Rectangle eventRect = {
+        eventPosition.x,
+        eventPosition.y,
+        eventSprite.width * 7.0f,
+        eventSprite.height * 7.0f
+    };
 
     Rectangle playerRect = {
         player.GetPosition().x,
@@ -66,38 +53,34 @@ bool Event::CheckCollision(Player& player) {
         player.GetFrameHeight()
     };
 
-    bool collided = CheckCollisionRecs(eventRect, playerRect);
-    if (collided) {
-        HandleEvent();
-        player.SetState(PlayerState::EVENT_1);
+    if (CheckCollisionRecs(eventRect, playerRect)) {
+        isTriggered = true;
+        return true;
     }
-    return collided;
+    return false;
 }
 
 void Event::Draw() {
-    if (!isTriggered) {
-        // Draw the event sprite
-        Rectangle sourceRec = { 0.0f, 0.0f, (float)eventSprite.width, (float)eventSprite.height };
-        Rectangle destRec = { position.x, position.y, eventRect.width, eventRect.height };
+    if (!isCollected) {
+        Rectangle sourceRec = { 0, 0, (float)eventSprite.width, (float)eventSprite.height };
+        Rectangle destRec = { eventPosition.x, eventPosition.y, eventSprite.width * 7.0f, eventSprite.height * 7.0f };
         DrawTexturePro(eventSprite, sourceRec, destRec, { 0, 0 }, 0.0f, WHITE);
     }
 
-    // Draw star (either gray or colored)
-    Rectangle starSourceRec = { 0.0f, 0.0f,
-        (float)(isCollected ? starSprite.width : starGraySprite.width),
-        (float)(isCollected ? starSprite.height : starGraySprite.height) };
-    Rectangle starDestRec = {
-        starPosition.x,
-        starPosition.y,
-        (float)(isCollected ? starSprite.width : starGraySprite.width) * STAR_SCALE,
-        (float)(isCollected ? starSprite.height : starGraySprite.height) * STAR_SCALE
-    };
-    DrawTexturePro(
-        isCollected ? starSprite : starGraySprite,
-        starSourceRec,
-        starDestRec,
-        { 0, 0 },
-        0.0f,
-        WHITE
-    );
+    // Draw stars
+    float starScale = 0.3f;
+    Rectangle starDestRec1 = { 20, (float)GetScreenHeight() - starGraySprite.height * starScale - 20, starGraySprite.width * starScale, starGraySprite.height * starScale };
+    Rectangle starDestRec2 = { 60 + starGraySprite.width * starScale, (float)GetScreenHeight() - starGraySprite.height * starScale - 20, starGraySprite.width * starScale, starGraySprite.height * starScale };
+
+    // Draw appropriate star based on event type and collection status
+    if (eventType == 1) {
+        DrawTexturePro(isCollected ? starSprite : starGraySprite,
+            { 0, 0, (float)starSprite.width, (float)starSprite.height },
+            starDestRec1, { 0, 0 }, 0.0f, WHITE);
+    }
+    else {
+        DrawTexturePro(isCollected ? starSprite : starGraySprite,
+            { 0, 0, (float)starSprite.width, (float)starSprite.height },
+            starDestRec2, { 0, 0 }, 0.0f, WHITE);
+    }
 }

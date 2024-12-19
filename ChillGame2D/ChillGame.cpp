@@ -1,132 +1,127 @@
 #include "ChillGame.h"
 #include "Event.h"
 
-void ChillGame::Main() {
-    Start();
+ChillGame::ChillGame() :
+    player(std::make_unique<Player>()),
+    currentEvent{ nullptr },
+    event2{ nullptr },
+    backgroundTexture{ 0 },
+    restartSprite{ 0 },
+    restartButtonRect{ 0 },
+    showRestartButton{ false },
+    triggerTime{ 0.0f },
+    deathCount{ 0 },
+    isEvent1Unlocked{ false },
+    isEvent2Unlocked{ false }
+{
+}
 
-    InitWindow(screenWidth, screenHeight, "Chill Game");
-    SetTargetFPS(60);
-
-    // Load background texture
-    const char* backgroundPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/grassBG.png";
-    backgroundTexture = LoadTexture(backgroundPath);
-    if (backgroundTexture.id == 0) {
-        TraceLog(LOG_ERROR, "Failed to load background texture: %s", backgroundPath);
-    }
-
-    // Initialize game objects
-    player.Main();
-    InitializeEvents();
-    LoadRestartButton();
-
-    while (!WindowShouldClose()) {
-        Update();
-        Draw();
-    }
-
-    // Clean up resources
+ChillGame::~ChillGame() {
     if (currentEvent) {
-        currentEvent.reset();  // Ensure event is destroyed before textures
+        currentEvent.reset();
+    }
+    if (event2) {
+        event2.reset();
     }
     UnloadTexture(backgroundTexture);
     UnloadTexture(restartSprite);
     CloseWindow();
 }
 
+void ChillGame::Main() {
+    InitWindow(1200, 800, "Chill Game");
+    SetTargetFPS(60);
+    Start();
+
+    while (!WindowShouldClose()) {
+        Update();
+        Draw();
+    }
+}
+
 void ChillGame::Start() {
     showRestartButton = false;
     triggerTime = 0;
-    player.Start();
+    player->Start();
+    InitializeEvents();
+
+    // Load background
+    const char* backgroundPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/grass.png";
+    backgroundTexture = LoadTexture(backgroundPath);
+
+    // Load restart button
+    const char* restartPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/restart.png";
+    restartSprite = LoadTexture(restartPath);
+
+    float buttonScale = 0.5f;
+    restartButtonRect = {
+        GetScreenWidth() / 2.0f - (restartSprite.width * buttonScale) / 2,
+        GetScreenHeight() / 2.0f - (restartSprite.height * buttonScale) / 2,
+        restartSprite.width * buttonScale,
+        restartSprite.height * buttonScale
+    };
 }
 
 void ChillGame::InitializeEvents() {
     currentEvent = std::make_unique<Event>();
-    Vector2 eventPos = {
+    Vector2 event1Pos = {
         GetScreenWidth() * 0.75f - 32.0f,
         GetScreenHeight() * 0.5f - 32.0f
     };
-    currentEvent->Main(EventType::EVENT_1, eventPos);
+    currentEvent->Main(EventType::EVENT_1, event1Pos);
+
+    event2 = std::make_unique<Event>();
+    Vector2 event2Pos = {
+        GetScreenWidth() * 0.25f - 32.0f,
+        GetScreenHeight() * 0.5f - 32.0f
+    };
+    event2->Main(EventType::EVENT_2, event2Pos);
+
     if (isEvent1Unlocked) {
-        currentEvent->SetCollected(true);  // Keep star colored if event was previously completed
+        currentEvent->SetCollected(true);
+    }
+    if (isEvent2Unlocked) {
+        event2->SetCollected(true);
     }
 }
 
 void ChillGame::Update() {
-    player.Update();
+    player->Update();
 
-    if (currentEvent) {
-        if (currentEvent->CheckCollision(player)) {
-            showRestartButton = false;
-            triggerTime = GetTime();
-            isEvent1Unlocked = true;
-        }
+    // Check collisions with both events
+    if (currentEvent && currentEvent->CheckCollision(*player)) {
+        showRestartButton = false;
+        triggerTime = GetTime();
+        isEvent1Unlocked = true;
+        currentEvent->SetTriggered(true);
+    }
 
-        // After 3 seconds of event trigger
-        if (!showRestartButton && currentEvent->IsTriggered()) {
-            float currentTime = static_cast<float>(GetTime());
-            float elapsedTime = currentTime - static_cast<float>(triggerTime);
+    if (event2 && event2->CheckCollision(*player)) {
+        showRestartButton = false;
+        triggerTime = GetTime();
+        isEvent2Unlocked = true;
+        event2->SetTriggered(true);
+    }
 
-            if (elapsedTime >= 3.0f) {
-                player.SetEventActive(true);  // Activate event state after delay
-                showRestartButton = true;
+    // Handle event completion after delay
+    if (!showRestartButton && (currentEvent->IsTriggered() || event2->IsTriggered())) {
+        float currentTime = static_cast<float>(GetTime());
+        float elapsedTime = currentTime - triggerTime;
+
+        if (elapsedTime >= 3.0f) {
+            player->SetEventActive(true);
+            showRestartButton = true;
+            if (currentEvent->IsTriggered()) {
                 currentEvent->SetCollected(true);
-                deathCount++;
             }
+            if (event2->IsTriggered()) {
+                event2->SetCollected(true);
+            }
+            deathCount++;
         }
     }
 
     HandleRestartButton();
-}
-
-void ChillGame::Draw() {
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
-
-    if (backgroundTexture.id != 0) {
-        // Calculate scaling to maintain aspect ratio
-        float scale = fmax(
-            (float)screenWidth / backgroundTexture.width,
-            (float)screenHeight / backgroundTexture.height
-        );
-
-        // Calculate centered position and dimensions
-        float destWidth = backgroundTexture.width * scale;
-        float destHeight = backgroundTexture.height * scale;
-        float destX = (screenWidth - destWidth) / 2;
-        float destY = (screenHeight - destHeight) / 2;
-
-        DrawTexturePro(
-            backgroundTexture,
-            { 0, 0, (float)backgroundTexture.width, (float)backgroundTexture.height },
-            { destX, destY, destWidth, destHeight },
-            { 0, 0 },
-            0.0f,
-            WHITE
-        );
-    }
-
-    if (currentEvent) {
-        currentEvent->Draw();
-    }
-
-    player.Draw();
-
-    // Draw death counter
-    const char* deathText = TextFormat("Deaths: %d", deathCount);
-    DrawText(deathText, 20, 20, 42, BLACK);
-
-    if (showRestartButton && restartSprite.id != 0) {
-        DrawTexturePro(
-            restartSprite,
-            { 0, 0, (float)restartSprite.width, (float)restartSprite.height },
-            restartButtonRect,
-            { 0, 0 },
-            0.0f,
-            WHITE
-        );
-    }
-
-    EndDrawing();
 }
 
 void ChillGame::HandleRestartButton() {
@@ -139,28 +134,40 @@ void ChillGame::HandleRestartButton() {
 }
 
 void ChillGame::Reset() {
-    Start();
-    player.SetEventActive(false);  // Reset event state
-    InitializeEvents();  // This will maintain the unlocked state
+    player->Start();
+    showRestartButton = false;
+    player->SetEventActive(false);
+    InitializeEvents();
 }
 
-void ChillGame::LoadRestartButton() {
-    const char* restartPath = "E:/LaSalle/vgp230_2dGames/ChillGame2D/Assets/tempRestart.png";
-    restartSprite = LoadTexture(restartPath);
+void ChillGame::Draw() {
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
 
-    if (restartSprite.id == 0) {
-        TraceLog(LOG_ERROR, "Failed to load restart sprite: %s", restartPath);
-        return;
+    // Draw background
+    for (int y = 0; y < GetScreenHeight(); y += backgroundTexture.height) {
+        for (int x = 0; x < GetScreenWidth(); x += backgroundTexture.width) {
+            DrawTexture(backgroundTexture, x, y, WHITE);
+        }
     }
 
-    float restartScaledWidth = restartSprite.width * RESTART_SCALE;
-    float restartScaledHeight = restartSprite.height * RESTART_SCALE;
-    float padding = screenWidth * RESTART_PADDING_RATIO;
+    // Draw events
+    if (currentEvent) currentEvent->Draw();
+    if (event2) event2->Draw();
 
-    restartButtonRect = {
-        (float)screenWidth - restartScaledWidth - padding,
-        (float)screenHeight - restartScaledHeight - padding,
-        restartScaledWidth,
-        restartScaledHeight
-    };
+    // Draw player
+    player->Draw();
+
+    // Draw death counter
+    DrawText(TextFormat("Deaths: %d", deathCount), 10, 10, 30, BLACK);
+
+    // Draw restart button if needed
+    if (showRestartButton) {
+        DrawTexturePro(restartSprite,
+            { 0, 0, (float)restartSprite.width, (float)restartSprite.height },
+            restartButtonRect,
+            { 0, 0 }, 0.0f, WHITE);
+    }
+
+    EndDrawing();
 }

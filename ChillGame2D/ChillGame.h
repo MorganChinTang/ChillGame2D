@@ -6,38 +6,29 @@
 
 class ChillGame {
 public:
-    ChillGame() :
-        player{},
-        currentEvent{ nullptr },
-        restartSprite{ 0 },
-        restartButtonRect{ 0 },
-        backgroundTexture{ 0 },
-        deathCount{ 0 },
-        showRestartButton{ false },
-        triggerTime{ 0.0 },
-        isEvent1Unlocked{ false }  // Track if event 1 has been completed
-    {
-    }
+    ChillGame();
+    ~ChillGame();
+
     void Main();
     void Start();
     void Update();
     void Draw();
-
-private:
-    void LoadRestartButton();
+    void Reset();
     void InitializeEvents();
     void HandleRestartButton();
-    void Reset();
 
-    Player player;
-    std::unique_ptr<Event> currentEvent;
-    Texture2D restartSprite;
-    Rectangle restartButtonRect;
+private:
+    std::unique_ptr<Player> player;
+    std::unique_ptr<Event> event1;
+    std::unique_ptr<Event> event2;
     Texture2D backgroundTexture;
-    int deathCount;
+    Texture2D restartButton;
+    Rectangle restartButtonRect;
     bool showRestartButton;
-    double triggerTime;
-    bool isEvent1Unlocked;  // Maintain unlocked state across restarts
+    float triggerTime;
+    int deathCount;
+    bool isEvent1Unlocked;
+    bool isEvent2Unlocked;
 
     // Screen dimensions
     const int screenWidth = 1200;

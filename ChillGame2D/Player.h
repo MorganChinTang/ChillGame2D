@@ -8,12 +8,17 @@ enum class PlayerState {
     RUN_RIGHT,
     RUN_LEFT,
     EVENT_1,
-    EVENT_1_FROZEN
+    EVENT_2
 };
 
 enum class Direction {
     LEFT,
     RIGHT
+};
+
+enum class EventType {
+    EVENT_1,
+    EVENT_2
 };
 
 class Player {
@@ -28,12 +33,14 @@ public:
         idleLeftTexture{ 0 },
         runRightTexture{ 0 },
         runLeftTexture{ 0 },
-        eventTexture{ 0 },
+        event1Texture{ 0 },
+        event2Texture{ 0 },
         deadChickenTexture{ 0 },
+        poisonedChickenTexture{ 0 },
         isEventAnimationComplete(false),
         isEventActive(false),
         canMove(true),
-        currentDeadChickenIndex(0)
+        currentEventType(EventType::EVENT_1)
     {
     }
 
@@ -42,11 +49,10 @@ public:
         UnloadTexture(idleLeftTexture);
         UnloadTexture(runRightTexture);
         UnloadTexture(runLeftTexture);
-        UnloadTexture(eventTexture);
+        UnloadTexture(event1Texture);
+        UnloadTexture(event2Texture);
         UnloadTexture(deadChickenTexture);
-        for (auto& texture : deadChickenTextures) {
-            UnloadTexture(texture);
-        }
+        UnloadTexture(poisonedChickenTexture);
     }
 
     void Main();
@@ -56,8 +62,7 @@ public:
     void SetState(PlayerState newState);
     void HandleMovement();
     void UpdateAnimation();
-    void LoadDeadChickenTextures();
-    void SetEventActive(bool active);
+    void SetEventActive(bool active, EventType type = EventType::EVENT_1);
     Vector2 GetPosition() const { return position; }
     float GetFrameWidth() const;
     float GetFrameHeight() const;
@@ -72,7 +77,6 @@ private:
     static constexpr int EVENT_FRAME_COUNT = 6;
     static constexpr int IDLE_FRAME_COUNT = 4;
     static constexpr int RUN_FRAME_COUNT = 4;
-    static constexpr int DEAD_CHICKEN_COUNT = 4;  // Number of dead chicken variations
 
     Vector2 position;
     PlayerState state;
@@ -83,11 +87,12 @@ private:
     Texture2D idleLeftTexture;
     Texture2D runRightTexture;
     Texture2D runLeftTexture;
-    Texture2D eventTexture;
+    Texture2D event1Texture;
+    Texture2D event2Texture;
     Texture2D deadChickenTexture;
-    std::vector<Texture2D> deadChickenTextures;
+    Texture2D poisonedChickenTexture;
     bool isEventAnimationComplete;
     bool isEventActive;
     bool canMove;
-    int currentDeadChickenIndex;
+    EventType currentEventType;
 };

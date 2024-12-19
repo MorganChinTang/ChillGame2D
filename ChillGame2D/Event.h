@@ -2,54 +2,43 @@
 #include "raylib.h"
 #include "Player.h"
 
-enum class EventType {
-    EVENT_1
-};
-
 class Event {
 public:
     Event() :
         eventSprite{ 0 },
-        starGraySprite{ 0 },
         starSprite{ 0 },
-        eventRect{ 0, 0, 0, 0 },
-        position{ 0, 0 },
-        starPosition{ 0, 0 },
-        isTriggered(false),
+        starGraySprite{ 0 },
         isCollected(false),
-        eventType(EventType::EVENT_1)
+        isTriggered(false),
+        eventPosition{ 0, 0 },
+        eventType(1)
     {
     }
 
     ~Event() {
         UnloadTexture(eventSprite);
-        UnloadTexture(starGraySprite);
         UnloadTexture(starSprite);
+        UnloadTexture(starGraySprite);
     }
 
-    void Main(EventType type, Vector2 pos);
-    void Initialize(Vector2 pos);
     void Start();
     void Update();
+    void HandleEvent();
+    void Main(int eventType, Vector2 position);
     void Draw();
-    bool CheckCollision(Player& player);
-    bool IsTriggered() const { return isTriggered; }
-    bool IsCollected() const { return isCollected; }
+    bool CheckCollision(const Player& player);
     void SetCollected(bool collected) { isCollected = collected; }
+    bool IsTriggered() const { return isTriggered; }
+    void SetTriggered(bool triggered) { isTriggered = triggered; }
+    int GetType() const { return eventType; }
+    Vector2 GetPosition() const { return eventPosition; }
 
 private:
-    void HandleEvent();
-
-    static constexpr float EVENT_SCALE = 3.0f;  // 3 times the original 0.6 scale
-    static constexpr float STAR_SCALE = 0.3f;
-
+    int eventType;
+    Vector2 eventPosition;
     Texture2D eventSprite;
-    Texture2D starGraySprite;
     Texture2D starSprite;
-    Rectangle eventRect;
-    Vector2 position;
-    Vector2 starPosition;
-    bool isTriggered;
+    Texture2D starGraySprite;
     bool isCollected;
-    EventType eventType;
+    bool isTriggered;
 };
