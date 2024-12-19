@@ -40,7 +40,7 @@ public:
 private:
     void HandleEvent();
 
-    static constexpr float EVENT_SCALE = 3.0f;  // 3 times the original 0.6 scale
+    static constexpr float EVENT_SCALE = 7.0f;  // 3 times the original 0.6 scale
     static constexpr float STAR_SCALE = 0.3f;
 
     Texture2D eventSprite;
